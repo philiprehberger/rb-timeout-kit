@@ -3,6 +3,7 @@
 [![Tests](https://github.com/philiprehberger/rb-timeout-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-timeout-kit/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-timeout_kit.svg)](https://rubygems.org/gems/philiprehberger-timeout_kit)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-timeout-kit)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Safe timeout patterns without Thread.raise
 
