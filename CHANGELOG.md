@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-29
+
+### Added
+- Deadline callbacks via `on_expire:` keyword argument or `Deadline#on_expire` block registration, fired once on first expiry detection
+- Grace period via `grace:` keyword argument with `Deadline#in_grace?` and `Deadline#grace_remaining` accessors
+- Deadline naming via `name:` keyword argument with `Deadline#name` accessor, included in error messages
+- Full README compliance with 8 badges, Support section, and all standard sections
+- GitHub issue templates (bug report, feature request), dependabot config, and PR template
+
 ## [0.1.1] - 2026-03-22
 
 ### Added

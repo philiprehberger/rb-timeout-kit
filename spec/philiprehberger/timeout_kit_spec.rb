@@ -41,7 +41,7 @@ RSpec.describe Philiprehberger::TimeoutKit do
       end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded)
     end
 
-    it 'returns 0.0 remaining after deadline expires' do
+    it 'returns 0.0 remaining after deadline expires (no grace)' do
       described_class.deadline(0.01) do |d|
         sleep 0.05
         expect(d.remaining).to eq(0.0)
@@ -266,6 +266,213 @@ RSpec.describe Philiprehberger::TimeoutKit do
             expect(inner.remaining).to be <= 1
           end
         end
+      end
+    end
+  end
+
+  describe 'deadline naming' do
+    it 'accepts a name parameter' do
+      described_class.deadline(5, name: 'db_query') do |d|
+        expect(d.name).to eq('db_query')
+      end
+    end
+
+    it 'defaults name to nil' do
+      described_class.deadline(5) do |d|
+        expect(d.name).to be_nil
+      end
+    end
+
+    it 'includes the name in the error message when expired' do
+      expect do
+        described_class.deadline(0, name: 'db_query', &:check!)
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded, "Deadline 'db_query' exceeded")
+    end
+
+    it 'uses generic message when name is nil' do
+      expect do
+        described_class.deadline(0, &:check!)
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded, 'Deadline exceeded')
+    end
+
+    it 'exposes name via current_deadline' do
+      described_class.deadline(5, name: 'api_call') do |_d|
+        expect(described_class.current_deadline.name).to eq('api_call')
+      end
+    end
+  end
+
+  describe 'deadline callbacks' do
+    it 'calls on_expire callback when check! detects expiry' do
+      called = false
+      expect do
+        described_class.deadline(0, on_expire: -> { called = true }, &:check!)
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded)
+      expect(called).to be(true)
+    end
+
+    it 'calls on_expire callback only once even with multiple check! calls' do
+      call_count = 0
+      described_class.deadline(0, on_expire: -> { call_count += 1 }) do |d|
+        begin
+          d.check!
+        rescue Philiprehberger::TimeoutKit::DeadlineExceeded
+          nil
+        end
+        begin
+          d.check!
+        rescue Philiprehberger::TimeoutKit::DeadlineExceeded
+          nil
+        end
+        begin
+          d.check!
+        rescue Philiprehberger::TimeoutKit::DeadlineExceeded
+          nil
+        end
+      end
+      expect(call_count).to eq(1)
+    end
+
+    it 'does not call on_expire if deadline has not expired' do
+      called = false
+      described_class.deadline(5, on_expire: -> { called = true }) do |d|
+        d.check!
+      end
+      expect(called).to be(false)
+    end
+
+    it 'supports block-style on_expire registration' do
+      called = false
+      expect do
+        described_class.deadline(0) do |d|
+          d.on_expire { called = true }
+          d.check!
+        end
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded)
+      expect(called).to be(true)
+    end
+
+    it 'fires callback before raising the exception' do
+      order = []
+      expect do
+        described_class.deadline(0, on_expire: -> { order << :callback }) do |d|
+          d.check!
+          order << :after_check
+        end
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded)
+      expect(order).to eq([:callback])
+    end
+  end
+
+  describe 'grace period' do
+    it 'does not raise during grace period' do
+      described_class.deadline(0, grace: 5) do |d|
+        expect { d.check! }.not_to raise_error
+      end
+    end
+
+    it 'reports expired? as true during grace period' do
+      described_class.deadline(0, grace: 5) do |d|
+        expect(d.expired?).to be(true)
+      end
+    end
+
+    it 'reports in_grace? as true during grace period' do
+      described_class.deadline(0, grace: 5) do |d|
+        expect(d.in_grace?).to be(true)
+      end
+    end
+
+    it 'reports in_grace? as false before primary deadline' do
+      described_class.deadline(5, grace: 2) do |d|
+        expect(d.in_grace?).to be(false)
+      end
+    end
+
+    it 'raises after grace period expires' do
+      expect do
+        described_class.deadline(0, grace: 0.01) do |d|
+          sleep 0.05
+          d.check!
+        end
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded)
+    end
+
+    it 'returns negative remaining during grace period' do
+      described_class.deadline(0, grace: 5) do |d|
+        expect(d.remaining).to be < 0
+      end
+    end
+
+    it 'returns grace_remaining during grace period' do
+      described_class.deadline(0, grace: 5) do |d|
+        expect(d.grace_remaining).to be > 0
+        expect(d.grace_remaining).to be <= 5
+      end
+    end
+
+    it 'returns 0.0 grace_remaining when no grace period is set' do
+      described_class.deadline(5) do |d|
+        expect(d.grace_remaining).to eq(0.0)
+      end
+    end
+
+    it 'returns 0.0 grace_remaining after grace expires' do
+      described_class.deadline(0, grace: 0.01) do |d|
+        sleep 0.05
+        expect(d.grace_remaining).to eq(0.0)
+      end
+    end
+
+    it 'reports in_grace? as false after grace expires' do
+      described_class.deadline(0, grace: 0.01) do |d|
+        sleep 0.05
+        expect(d.in_grace?).to be(false)
+      end
+    end
+
+    it 'reports in_grace? as false when no grace period is set' do
+      described_class.deadline(0) do |d|
+        expect(d.in_grace?).to be(false)
+      end
+    end
+
+    it 'fires on_expire callback during grace period' do
+      called = false
+      described_class.deadline(0, grace: 5, on_expire: -> { called = true }) do |d|
+        d.check!
+      end
+      expect(called).to be(true)
+    end
+
+    it 'includes name in error after grace expires' do
+      expect do
+        described_class.deadline(0, name: 'slow_op', grace: 0.01) do |d|
+          sleep 0.05
+          d.check!
+        end
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded, "Deadline 'slow_op' exceeded")
+    end
+  end
+
+  describe 'combined features' do
+    it 'supports name + grace + on_expire together' do
+      called = false
+      described_class.deadline(0, name: 'combo', grace: 5, on_expire: -> { called = true }) do |d|
+        d.check! # should not raise (in grace)
+        expect(d.name).to eq('combo')
+        expect(d.expired?).to be(true)
+        expect(d.in_grace?).to be(true)
+        expect(called).to be(true)
+      end
+    end
+
+    it 'supports block-style on_expire with named deadline' do
+      called = false
+      described_class.deadline(0, name: 'test') do |d|
+        d.on_expire { called = true }
+        expect { d.check! }.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded, "Deadline 'test' exceeded")
+        expect(called).to be(true)
       end
     end
   end
