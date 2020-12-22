@@ -335,9 +335,7 @@ RSpec.describe Philiprehberger::TimeoutKit do
 
     it 'does not call on_expire if deadline has not expired' do
       called = false
-      described_class.deadline(5, on_expire: -> { called = true }) do |d|
-        d.check!
-      end
+      described_class.deadline(5, on_expire: -> { called = true }, &:check!)
       expect(called).to be(false)
     end
 
@@ -439,9 +437,7 @@ RSpec.describe Philiprehberger::TimeoutKit do
 
     it 'fires on_expire callback during grace period' do
       called = false
-      described_class.deadline(0, grace: 5, on_expire: -> { called = true }) do |d|
-        d.check!
-      end
+      described_class.deadline(0, grace: 5, on_expire: -> { called = true }, &:check!)
       expect(called).to be(true)
     end
 
