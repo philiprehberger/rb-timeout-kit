@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-03-22
+
+### Added
+- Expanded test suite from 19 to 30+ examples covering edge cases, error hierarchy, zero/large timeouts, nested deadlines, and cooperative timeout loops
+
 ## [0.1.0] - 2026-03-22
 
 ### Added
