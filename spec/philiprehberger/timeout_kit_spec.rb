@@ -1,0 +1,139 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+RSpec.describe Philiprehberger::TimeoutKit do
+  it "has a version number" do
+    expect(Philiprehberger::TimeoutKit::VERSION).not_to be_nil
+  end
+
+  describe ".deadline" do
+    it "yields a deadline context" do
+      described_class.deadline(5) do |d|
+        expect(d).to be_a(Philiprehberger::TimeoutKit::Deadline)
+      end
+    end
+
+    it "returns the block's return value" do
+      result = described_class.deadline(5) { "done" }
+      expect(result).to eq("done")
+    end
+
+    it "provides remaining time" do
+      described_class.deadline(5) do |d|
+        expect(d.remaining).to be > 0
+        expect(d.remaining).to be <= 5
+      end
+    end
+
+    it "check! does not raise before deadline" do
+      described_class.deadline(5) do |d|
+        expect { d.check! }.not_to raise_error
+      end
+    end
+
+    it "check! raises DeadlineExceeded after deadline" do
+      expect do
+        described_class.deadline(0.01) do |d|
+          sleep 0.05
+          d.check!
+        end
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded)
+    end
+
+    it "returns 0.0 remaining after deadline expires" do
+      described_class.deadline(0.01) do |d|
+        sleep 0.05
+        expect(d.remaining).to eq(0.0)
+      end
+    end
+
+    it "reports expired? correctly" do
+      described_class.deadline(0.01) do |d|
+        expect(d.expired?).to be(false)
+        sleep 0.05
+        expect(d.expired?).to be(true)
+      end
+    end
+  end
+
+  describe "nested deadlines" do
+    it "uses the tighter inner deadline" do
+      described_class.deadline(10) do |outer|
+        described_class.deadline(1) do |inner|
+          expect(inner.remaining).to be <= 1
+          expect(inner.remaining).to be < outer.remaining
+        end
+      end
+    end
+
+    it "uses the tighter outer deadline when inner is longer" do
+      described_class.deadline(1) do |_outer|
+        described_class.deadline(10) do |effective|
+          expect(effective.remaining).to be <= 1
+        end
+      end
+    end
+
+    it "restores the outer deadline after inner completes" do
+      described_class.deadline(5) do |_outer|
+        described_class.deadline(1) { |_inner| nil }
+
+        current = described_class.current_deadline
+        expect(current.remaining).to be > 1
+      end
+    end
+  end
+
+  describe ".cooperative" do
+    it "yields a timeout context" do
+      described_class.cooperative(5) do |t|
+        expect(t).to be_a(Philiprehberger::TimeoutKit::Deadline)
+      end
+    end
+
+    it "returns the block's return value" do
+      result = described_class.cooperative(5) { "result" }
+      expect(result).to eq("result")
+    end
+
+    it "check! does not raise before timeout" do
+      described_class.cooperative(5) do |t|
+        expect { t.check! }.not_to raise_error
+      end
+    end
+
+    it "check! raises DeadlineExceeded after timeout" do
+      expect do
+        described_class.cooperative(0.01) do |t|
+          sleep 0.05
+          t.check!
+        end
+      end.to raise_error(Philiprehberger::TimeoutKit::DeadlineExceeded)
+    end
+
+    it "provides remaining time" do
+      described_class.cooperative(5) do |t|
+        expect(t.remaining).to be > 0
+        expect(t.remaining).to be <= 5
+      end
+    end
+  end
+
+  describe ".current_deadline" do
+    it "returns nil when no deadline is active" do
+      expect(described_class.current_deadline).to be_nil
+    end
+
+    it "returns the current deadline inside a deadline block" do
+      described_class.deadline(5) do |d|
+        expect(described_class.current_deadline).to eq(d)
+      end
+    end
+
+    it "returns nil after the deadline block completes" do
+      described_class.deadline(5) { |_d| nil }
+      expect(described_class.current_deadline).to be_nil
+    end
+  end
+end
