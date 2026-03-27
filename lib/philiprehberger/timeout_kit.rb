@@ -24,10 +24,10 @@ module Philiprehberger
       # Support nested deadlines: use the tightest constraint
       parent = current_deadline
       effective = if parent && parent.expires_at < dl.expires_at
-                   parent
-                 else
-                   dl
-                 end
+                    parent
+                  else
+                    dl
+                  end
 
       push_deadline(effective)
       begin
@@ -77,5 +77,5 @@ module Philiprehberger
   end
 end
 
-require_relative "timeout_kit/version"
-require_relative "timeout_kit/deadline"
+require_relative 'timeout_kit/version'
+require_relative 'timeout_kit/deadline'

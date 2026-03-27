@@ -22,7 +22,7 @@ module Philiprehberger
       # @raise [DeadlineExceeded] if the deadline has passed
       # @return [void]
       def check!
-        raise DeadlineExceeded, "Deadline exceeded" if expired?
+        raise DeadlineExceeded, 'Deadline exceeded' if expired?
       end
 
       # Return the remaining time in seconds.
