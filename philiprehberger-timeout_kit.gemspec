@@ -10,7 +10,8 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Safe timeout patterns without Thread.raise'
   spec.description = 'A cooperative timeout library providing deadline and timeout patterns that ' \
-                     'avoid Thread.raise, with nested deadline support and explicit cancellation checks.'
+                     'avoid Thread.raise, with nested deadline support, grace periods, callbacks, ' \
+                     'and explicit cancellation checks.'
   spec.homepage = 'https://github.com/philiprehberger/rb-timeout-kit'
   spec.license = 'MIT'
 

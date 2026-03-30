@@ -2,7 +2,11 @@
 
 [![Tests](https://github.com/philiprehberger/rb-timeout-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-timeout-kit/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-timeout_kit.svg)](https://rubygems.org/gems/philiprehberger-timeout_kit)
+[![GitHub release](https://img.shields.io/github/v/release/philiprehberger/rb-timeout-kit)](https://github.com/philiprehberger/rb-timeout-kit/releases)
+[![Last updated](https://img.shields.io/github/last-commit/philiprehberger/rb-timeout-kit)](https://github.com/philiprehberger/rb-timeout-kit/commits/main)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-timeout-kit)](LICENSE)
+[![Bug Reports](https://img.shields.io/github/issues/philiprehberger/rb-timeout-kit/bug)](https://github.com/philiprehberger/rb-timeout-kit/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+[![Feature Requests](https://img.shields.io/github/issues/philiprehberger/rb-timeout-kit/enhancement)](https://github.com/philiprehberger/rb-timeout-kit/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
 [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Safe timeout patterns without Thread.raise
@@ -66,6 +70,52 @@ Philiprehberger::TimeoutKit.deadline(30) do |outer|
 end
 ```
 
+### Deadline Naming
+
+```ruby
+Philiprehberger::TimeoutKit.deadline(10, name: 'db_query') do |d|
+  d.check!  # raises "Deadline 'db_query' exceeded" if expired
+  puts d.name  # => "db_query"
+end
+```
+
+### Deadline Callbacks
+
+```ruby
+Philiprehberger::TimeoutKit.deadline(10, on_expire: -> { cleanup() }) do |d|
+  loop do
+    d.check!  # fires callback once on first expiry detection
+    process_next_item
+  end
+end
+
+# Or register via block
+Philiprehberger::TimeoutKit.deadline(10) do |d|
+  d.on_expire { cleanup() }
+  loop do
+    d.check!
+    process_next_item
+  end
+end
+```
+
+### Grace Period
+
+```ruby
+Philiprehberger::TimeoutKit.deadline(10, grace: 2) do |d|
+  loop do
+    d.check!  # does not raise during 2s grace period
+    break if d.expired?
+
+    process_next_item
+  end
+
+  if d.in_grace?
+    puts "Grace period: #{d.grace_remaining}s left to wrap up"
+  end
+end
+```
+
 ### Cooperative Timeout
 
 ```ruby
@@ -90,12 +140,16 @@ end
 
 | Method | Description |
 |--------|-------------|
-| `.deadline(seconds) { \|d\| }` | Execute a block with a cooperative deadline |
+| `.deadline(seconds, name:, grace:, on_expire:) { \|d\| }` | Execute a block with a cooperative deadline |
 | `.cooperative(seconds) { \|t\| }` | Execute a block with a simple cooperative timeout |
 | `.current_deadline` | Return the current active deadline or nil |
-| `Deadline#check!` | Raise `DeadlineExceeded` if the deadline has passed |
-| `Deadline#remaining` | Seconds remaining until the deadline (0.0 if expired) |
-| `Deadline#expired?` | Whether the deadline has passed |
+| `Deadline#check!` | Raise `DeadlineExceeded` if the deadline has passed (respects grace period) |
+| `Deadline#remaining` | Seconds remaining until the primary deadline (negative during grace) |
+| `Deadline#expired?` | Whether the primary deadline has passed |
+| `Deadline#name` | The human-readable name for this deadline (nil if not set) |
+| `Deadline#in_grace?` | Whether the deadline is in the grace period |
+| `Deadline#grace_remaining` | Seconds remaining in the grace period (0.0 if none) |
+| `Deadline#on_expire { }` | Register a callback that fires once on expiry detection |
 | `DeadlineExceeded` | Raised when a deadline or timeout expires |
 
 ## Development
@@ -106,6 +160,13 @@ bundle exec rspec
 bundle exec rubocop
 ```
 
+## Support
+
+If you find this package useful, consider giving it a star on GitHub — it helps motivate continued maintenance and development.
+
+[![LinkedIn](https://img.shields.io/badge/Philip%20Rehberger-LinkedIn-0A66C2?logo=linkedin)](https://www.linkedin.com/in/philiprehberger)
+[![More packages](https://img.shields.io/badge/more-open%20source%20packages-blue)](https://philiprehberger.com/open-source-packages)
+
 ## License
 
-MIT
+[MIT](LICENSE)

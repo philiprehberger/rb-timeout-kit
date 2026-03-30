@@ -14,12 +14,15 @@ module Philiprehberger
     # constraint, but outer deadlines are also checked.
     #
     # @param seconds [Numeric] the number of seconds for the deadline
+    # @param name [String, nil] optional human-readable name for the deadline
+    # @param grace [Numeric, nil] optional grace period in seconds after the primary deadline
+    # @param on_expire [Proc, nil] optional callback that fires once when expiry is detected
     # @yield [deadline] the block to execute within the deadline
     # @yieldparam deadline [Deadline] the deadline context
     # @return the block's return value
     # @raise [DeadlineExceeded] if the deadline is exceeded and {Deadline#check!} is called
-    def self.deadline(seconds, &block)
-      dl = Deadline.new(seconds)
+    def self.deadline(seconds, name: nil, grace: nil, on_expire: nil, &block)
+      dl = Deadline.new(seconds, name: name, grace: grace, on_expire: on_expire)
 
       # Support nested deadlines: use the tightest constraint
       parent = current_deadline
