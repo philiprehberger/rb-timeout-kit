@@ -12,15 +12,15 @@ Gem::Specification.new do |spec|
   spec.description = 'A cooperative timeout library providing deadline and timeout patterns that ' \
                      'avoid Thread.raise, with nested deadline support, grace periods, callbacks, ' \
                      'and explicit cancellation checks.'
-  spec.homepage = 'https://github.com/philiprehberger/rb-timeout-kit'
+  spec.homepage      = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-timeout_kit'
   spec.license = 'MIT'
 
   spec.required_ruby_version = '>= 3.1.0'
 
   spec.metadata['homepage_uri'] = spec.homepage
-  spec.metadata['source_code_uri'] = spec.homepage
-  spec.metadata['changelog_uri'] = "#{spec.homepage}/blob/main/CHANGELOG.md"
-  spec.metadata['bug_tracker_uri'] = "#{spec.homepage}/issues"
+  spec.metadata['source_code_uri']       = 'https://github.com/philiprehberger/rb-timeout-kit'
+  spec.metadata['changelog_uri']         = 'https://github.com/philiprehberger/rb-timeout-kit/blob/main/CHANGELOG.md'
+  spec.metadata['bug_tracker_uri']       = 'https://github.com/philiprehberger/rb-timeout-kit/issues'
   spec.metadata['rubygems_mfa_required'] = 'true'
 
   spec.files = Dir['lib/**/*.rb', 'LICENSE', 'README.md', 'CHANGELOG.md']
