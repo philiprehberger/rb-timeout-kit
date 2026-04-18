@@ -49,6 +49,16 @@ Philiprehberger::TimeoutKit.deadline(10) do |d|
 end
 ```
 
+### Measuring elapsed time
+
+```ruby
+Philiprehberger::TimeoutKit.deadline(10) do |d|
+  do_work
+  puts "Work took #{d.elapsed}s so far"
+  # elapsed continues to grow past the budget even after expiration
+end
+```
+
 ### Nested Deadlines
 
 ```ruby
@@ -140,6 +150,7 @@ end
 | `.current_deadline` | Return the current active deadline or nil |
 | `Deadline#check!` | Raise `DeadlineExceeded` if the deadline has passed (respects grace period) |
 | `Deadline#remaining` | Seconds remaining until the primary deadline (negative during grace) |
+| `Deadline#elapsed` | Seconds elapsed since the deadline was created (continues past the budget after expiration) |
 | `Deadline#expired?` | Whether the primary deadline has passed |
 | `Deadline#name` | The human-readable name for this deadline (nil if not set) |
 | `Deadline#in_grace?` | Whether the deadline is in the grace period |
