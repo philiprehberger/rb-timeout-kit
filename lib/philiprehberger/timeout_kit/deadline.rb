@@ -20,7 +20,8 @@ module Philiprehberger
       # @param grace [Numeric, nil] optional grace period in seconds after the primary deadline
       # @param on_expire [Proc, nil] optional callback that fires once when expiry is detected
       def initialize(seconds, name: nil, grace: nil, on_expire: nil)
-        @expires_at = now + seconds
+        @started_at = now
+        @expires_at = @started_at + seconds
         @name = name
         @grace_seconds = grace
         @grace_expires_at = @grace_seconds ? @expires_at + @grace_seconds : nil
@@ -63,6 +64,16 @@ module Philiprehberger
         else
           r.negative? ? 0.0 : r
         end
+      end
+
+      # Return the number of seconds elapsed since the deadline was created.
+      # This is a pure wall-clock reading from the monotonic clock and continues
+      # to increase past the original budget after expiration. Independent of
+      # {#expired?} and {#in_grace?}.
+      #
+      # @return [Float] seconds elapsed since creation
+      def elapsed
+        now - @started_at
       end
 
       # Return the remaining time in the grace period.

@@ -150,6 +150,32 @@ RSpec.describe Philiprehberger::TimeoutKit do
       end
     end
 
+    describe '#elapsed' do
+      it 'returns approximately 0.0 just after creation' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(10)
+        expect(dl.elapsed).to be_within(0.05).of(0.0)
+      end
+
+      it 'returns approximately the slept duration after ~0.05s' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(10)
+        sleep 0.05
+        expect(dl.elapsed).to be_within(0.05).of(0.05)
+      end
+
+      it 'continues to grow beyond the total budget after expiration' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(0.01)
+        sleep 0.05
+        expect(dl.elapsed).to be > 0.01
+      end
+
+      it 'elapsed + remaining approximately equals the total budget when not expired' do
+        total = 10
+        dl = Philiprehberger::TimeoutKit::Deadline.new(total)
+        sleep 0.02
+        expect(dl.elapsed + dl.remaining).to be_within(0.01).of(total)
+      end
+    end
+
     describe '#expired?' do
       it 'is false for a fresh deadline' do
         dl = Philiprehberger::TimeoutKit::Deadline.new(10)
