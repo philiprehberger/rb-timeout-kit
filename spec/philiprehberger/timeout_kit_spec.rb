@@ -176,6 +176,47 @@ RSpec.describe Philiprehberger::TimeoutKit do
       end
     end
 
+    describe '#duration' do
+      it 'returns the original budget passed to new as a Float' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(10)
+        expect(dl.duration).to eq(10.0)
+      end
+
+      it 'preserves fractional budgets' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(0.25)
+        expect(dl.duration).to be_within(0.0001).of(0.25)
+      end
+
+      it 'returns 0.0 when initialized with zero seconds' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(0)
+        expect(dl.duration).to eq(0.0)
+      end
+    end
+
+    describe '#progress' do
+      it 'returns approximately 0.0 immediately after creation' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(10)
+        expect(dl.progress).to be < 0.05
+      end
+
+      it 'returns approximately 0.5 after sleeping half the budget' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(0.1)
+        sleep 0.05
+        expect(dl.progress).to be_within(0.3).of(0.5)
+      end
+
+      it 'exceeds 1.0 after the primary deadline expires' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(0.05)
+        sleep 0.1
+        expect(dl.progress).to be > 1.0
+      end
+
+      it 'returns 1.0 when duration is zero' do
+        dl = Philiprehberger::TimeoutKit::Deadline.new(0)
+        expect(dl.progress).to eq(1.0)
+      end
+    end
+
     describe '#expired?' do
       it 'is false for a fresh deadline' do
         dl = Philiprehberger::TimeoutKit::Deadline.new(10)

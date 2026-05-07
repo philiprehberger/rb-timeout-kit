@@ -13,6 +13,11 @@ module Philiprehberger
       # @return [String, nil] the human-readable name for this deadline
       attr_reader :name
 
+      # The original budget passed to {.new} as +seconds+.
+      #
+      # @return [Float] the original deadline duration in seconds
+      attr_reader :duration
+
       # Create a new deadline.
       #
       # @param seconds [Numeric] the number of seconds until the deadline expires
@@ -21,6 +26,7 @@ module Philiprehberger
       # @param on_expire [Proc, nil] optional callback that fires once when expiry is detected
       def initialize(seconds, name: nil, grace: nil, on_expire: nil)
         @started_at = now
+        @duration = seconds.to_f
         @expires_at = @started_at + seconds
         @name = name
         @grace_seconds = grace
@@ -74,6 +80,17 @@ module Philiprehberger
       # @return [Float] seconds elapsed since creation
       def elapsed
         now - @started_at
+      end
+
+      # Fraction of the original budget that has elapsed (0.0..1.0+).
+      # Exceeds 1.0 once the primary deadline has expired (and during grace period).
+      # Returns 1.0 if the original budget is zero.
+      #
+      # @return [Float] elapsed / duration
+      def progress
+        return 1.0 if @duration.zero?
+
+        elapsed / @duration
       end
 
       # Return the remaining time in the grace period.

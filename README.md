@@ -59,6 +59,14 @@ Philiprehberger::TimeoutKit.deadline(10) do |d|
 end
 ```
 
+### Deadline Progress
+
+```ruby
+deadline = Philiprehberger::TimeoutKit::Deadline.new(10)
+sleep 5
+deadline.progress # => 0.5 (approximately)
+```
+
 ### Nested Deadlines
 
 ```ruby
@@ -151,6 +159,8 @@ end
 | `Deadline#check!` | Raise `DeadlineExceeded` if the deadline has passed (respects grace period) |
 | `Deadline#remaining` | Seconds remaining until the primary deadline (negative during grace) |
 | `Deadline#elapsed` | Seconds elapsed since the deadline was created (continues past the budget after expiration) |
+| `Deadline#duration` | The original budget passed to `Deadline.new` (Float) |
+| `Deadline#progress` | Fraction of the budget that has elapsed (`elapsed / duration`); exceeds 1.0 after expiry |
 | `Deadline#expired?` | Whether the primary deadline has passed |
 | `Deadline#name` | The human-readable name for this deadline (nil if not set) |
 | `Deadline#in_grace?` | Whether the deadline is in the grace period |

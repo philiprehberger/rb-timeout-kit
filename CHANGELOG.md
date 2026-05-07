@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-07
+
+### Added
+- `Deadline#duration` — exposes the original budget passed to `Deadline.new`.
+- `Deadline#progress` — fraction of the budget consumed, useful for progress bars and adaptive cancellation.
+
 ## [0.3.0] - 2026-04-17
 
 ### Added
