@@ -74,7 +74,7 @@ module Philiprehberger
     def self.pop_deadline
       stack = Thread.current[:philiprehberger_timeout_kit_deadlines]
       stack&.pop
-      Thread.current[:philiprehberger_timeout_kit_deadlines] = nil if stack&.empty?
+      Thread.current[:philiprehberger_timeout_kit_deadlines] = nil if stack && stack.empty?
     end
     private_class_method :pop_deadline
   end
